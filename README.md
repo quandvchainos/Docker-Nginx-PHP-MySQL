@@ -1,4 +1,4 @@
-*Pre-requisites
+* Pre-requisites
     - Nginx: 1.19.2
     - PHP: 7.4-fpm
     - MariaDB: 10.5.5
