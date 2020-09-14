@@ -1,33 +1,60 @@
 version: "3"
 services:
-    php-fpm:
+    nginx:
+        image: nginx:latest
+        container_name: harry-nginx
+        restart: unless-stopped
+        ports:
+            - "8080:80"
+        volumes:
+            - ./code/blog:/var/www/html
+            - ./install/nginx:/etc/nginx/conf.d
+        links: 
+            - app
+            - redis
+            - db
+        networks:
+            - harry
+
+    app:
         build: install/php-fpm
+        container_name: harry-app
+        restart: unless-stopped
         ports:
             - 9010:9000
         volumes:
-            - ./code:/var/www/html/
-        links:
-            - db
-    nginx:
-        build: install/nginx
-        ports:
-            - 8080:80
-        volumes:
-            - ./code:/var/www/html/        
-        links:
-            - php-fpm
-    db:
-        image: mysql:5.6
-        ports:
-            - 3308:3306
-        restart: always
-        environment:
-            MYSQL_DATABASE: MyDB
-            MYSQL_USER: MyDB
-            MYSQL_PASSWORD: mydbpassword
-            MYSQL_ROOT_PASSWORD: rootpassword
-        volumes:
-            - MysqlVolume:/var/lib/mysql
+            - ./code/blog:/var/www/html
+        working_dir: /var/www/html
+        networks:
+            - harry
 
-volumes:
-  MysqlVolume:
+    db:
+        image: "mariadb:10.5.5"
+        container_name: harry-db
+        restart: unless-stopped
+        environment:
+            MYSQL_DATABASE: imagtor
+            MYSQL_ROOT_PASSWORD: root
+            MYSQL_PASSWORD: root
+            MYSQL_USER: root
+            SERVICE_TAGS: dev
+            SERVICE_NAME: mysql
+        ports:
+            - "33306:3306"  
+        volumes:
+            - ./install/mariadb:/docker-entrypoint-initdb.d
+        networks:
+            - harry
+
+    redis:
+        image: redis:latest
+        container_name: harry-redis
+        ports:
+            - "6379:6379"
+        command: redis-server --requirepass Wgn4Xn4HwNUbtzoVxAYxkiYB
+        networks:
+            - harry
+
+networks:
+    harry:
+        driver: bridge

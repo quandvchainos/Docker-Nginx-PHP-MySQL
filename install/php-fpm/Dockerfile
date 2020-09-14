@@ -1,41 +1,54 @@
-FROM php:7.2-fpm
+FROM php:7.4-fpm
 
-MAINTAINER Andri Kurnia Putra <andri.24434@gmail.com>
+MAINTAINER Quan Duong <quandv.125@gmail.com>
 
 RUN apt-get update && \
     apt-get install -y \
     git \
-    curl \
+    make \
+    supervisor \
+    curl gnupg \
     nano \
     libfreetype6-dev \
     libwebp-dev \
     libjpeg62-turbo-dev \
     libpng-dev \
-    nano \
     libgmp-dev \
+    libonig-dev \
+    libzip-dev \
     libldap2-dev \
+    libxml2-dev \
+    zip \
+    unzip \
     netcat \
     sqlite3 \
     libsqlite3-dev && \
-    docker-php-ext-configure gd --with-freetype-dir=/usr/include/ --with-webp-dir=/usr/include/  --with-jpeg-dir=/usr/include/ && \
-    docker-php-ext-install gd pdo pdo_mysql pdo_sqlite zip gmp bcmath pcntl ldap sysvmsg exif
+    docker-php-ext-install gd pdo pdo_mysql mbstring intl pdo_sqlite zip gmp bcmath pcntl ldap sysvmsg exif
         
 
-COPY symfony.pool.conf  /usr/local/etc/
+COPY symfony.pool.conf /usr/local/etc/
+
+# Clear cache
+RUN apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # install php composer
 RUN curl -sS https://getcomposer.org/installer | php
 RUN mv composer.phar /usr/local/bin/composer
 
-RUN usermod -u 1000 www-data
+# install node 12.x and npm
+RUN curl -sL https://deb.nodesource.com/setup_12.x  | bash -
+RUN apt-get -y install nodejs
 
-RUN echo "Asia/Jakarta" > /etc/timezone
-RUN dpkg-reconfigure -f noninteractive tzdata
+# php.ini
+COPY ./php.ini /usr/local/etc/php/php.ini
+
+# Supervisord
+COPY ./supervisord.conf /etc/supervisor/conf.d/supervisord.conf    
 
 # install Application
-#USER www-data
-#WORKDIR /var/www/html
-#RUN composer install
 
-EXPOSE 9000
+WORKDIR /var/www/html/blog
+
+#EXPOSE 9000
 CMD ["php-fpm", "-F"]
+

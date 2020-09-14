@@ -9,4 +9,8 @@ help:
 
 run:
 	@echo "Start Container Use default setting (listen web on 8080)"
+	@docker-compose down
 	@docker-compose up -d
+
+connect-app:
+	docker exec -it harry-app bash
